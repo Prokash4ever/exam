@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mr. Stylo Academy</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Base Styles */
+        body > *:not(.container):not(script):not(canvas) { display: none !important; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; padding: 10px; background: #eef1f5; font-family: 'Hind Siliguri', sans-serif; }
+        
+        .container { 
+            max-width: 600px; margin: 0 auto; background: white; min-height: 90vh; 
+            border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+            overflow: hidden; position: relative; display: flex; flex-direction: column; z-index: 10; 
+        }
+
+        /* Confetti Canvas */
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; display: none; }
+
+        /* Header */
+        .header { background: linear-gradient(135deg, #1565c0, #0d47a1); color: white; padding: 20px; text-align: center; }
+        
+        /* Buttons */
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1rem; transition: 0.2s; }
+        .btn-primary { background: #1565c0; color: white; }
+        .btn-danger { background: #c62828; color: white; }
+        .btn-success { background: #2e7d32; color: white; }
+        .btn-warning { background: #f9a825; color: white; }
+        .btn-dark { background: #37474f; color: white; }
+        .btn-outline { background: white; border: 1px solid #ddd; color: #333; }
+        .btn-share { background: #25D366; color: white; }
+
+        /* Side Panel (CBT Style) */
+        .side-panel { position: absolute; top: 0; right: -320px; width: 300px; height: 100%; background: white; z-index: 2000; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transition: right 0.3s ease; display: flex; flex-direction: column; }
+        .side-panel.open { right: 0; }
+        .panel-header { padding: 15px; background: #eee; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+        .overlay-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1900; display: none; }
+        .overlay-bg.active { display: block; }
+        
+        .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; font-size: 0.8rem; border-bottom: 1px solid #ddd; background: #f9f9f9; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .dot { width: 15px; height: 15px; border-radius: 50%; display: inline-block; border: 1px solid #ccc; }
+
+        .panel-body { flex: 1; overflow-y: auto; padding: 15px; }
+        .palette-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        .palette-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #ccc; background: white; display: flex; justify-content: center; align-items: center; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
+        .palette-btn.active { border: 2px solid #1565c0; } 
+        .palette-btn.answered { background: #2e7d32; color: white; border-color: #2e7d32; }
+        .palette-btn.review { background: #7b1fa2; color: white; border-color: #7b1fa2; }
+        
+        /* Exam UI */
+        .exam-header { background: #f5f5f5; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; }
+        .menu-btn { font-size: 1.5rem; cursor: pointer; background: none; border: none; padding: 5px; }
+        .timer-badge { background: #c62828; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; }
+        .marks-info { display: flex; gap: 10px; font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; }
+        .mark-pos { background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 4px; }
+        .mark-neg { background: #ffebee; color: #c62828; padding: 2px 8px; border-radius: 4px; }
+        .option-btn { background: #fff; border: 2px solid #e0e0e0; padding: 15px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; width: 100%; text-align: left; position: relative; transition: 0.2s; }
+        .selected { background: #e3f2fd; border-color: #1565c0; color: #1565c0; font-weight: 600; }
+        .footer-bar { padding: 10px; background: white; border-top: 1px solid #ddd; display: flex; gap: 5px; justify-content: space-between; }
+        .btn-footer { flex: 1; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; cursor: pointer; }
+        .btn-white { background: white; border: 1px solid #999; color: #333; }
+        .btn-blue { background: #1565c0; color: white; border: none; flex: 1.5; }
+
+        /* Popups */
+        .popup-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
+        .popup-box { background: white; padding: 25px; border-radius: 12px; width: 85%; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); animation: popIn 0.3s; }
+        @keyframes popIn { from {transform: scale(0.8);} to {transform: scale(1);} }
+
+        /* Stats Grid */
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.9rem; }
+        .stat-item { background: white; padding: 10px; border-radius: 6px; border: 1px solid #eee; }
+
+        .hidden { display: none !important; }
+        .p-20 { padding: 20px; }
+        .exam-card { background: #fff; border: 1px solid #eee; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none; }
+        .result-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .result-table td, th { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+        .q-box { background: #f8f9fa; padding: 15px; margin-bottom: 15px; position: relative; border-radius: 8px; }
+        .del-btn { position: absolute; top:5px; right:5px; background:#ffcdd2; border:none; color:red; border-radius:50%; width:25px; height:25px; cursor:pointer;}
+        
+        /* Topic Progress */
+        .topic-row { margin-bottom: 8px; }
+        .topic-header { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 3px; color: #444; }
+        .progress-bg { width: 100%; background: #eee; height: 8px; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<div class="container">
+
+    <div id="custom-popup" class="popup-overlay hidden">
+        <div class="popup-box">
+            <span id="pop-icon" style="font-size:3rem;">⚠️</span>
+            <h3 id="pop-title" style="margin:10px 0;">Alert</h3>
+            <p id="pop-msg" style="color:#666;">Msg</p>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button id="btn-pop-cancel" class="btn btn-outline" style="margin:0;">Cancel</button>
+                <button id="btn-pop-ok" class="btn btn-primary" style="margin:0;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="side-overlay" class="overlay-bg" onclick="togglePanel(false)"></div>
+    <div id="side-panel" class="side-panel">
+        <div class="panel-header">
+            <span>Questions Palette</span>
+            <button onclick="togglePanel(false)" style="background:none; border:none; font-size:1.2rem;">✖</button>
+        </div>
+        <div class="legend-grid">
+            <div class="legend-item"><span class="dot" style="background:#2e7d32;"></span> Answered</div>
+            <div class="legend-item"><span class="dot" style="background:#7b1fa2;"></span> Review</div>
+            <div class="legend-item"><span class="dot" style="background:white;"></span> Not Visited</div>
+            <div class="legend-item"><span class="dot" style="border-color:#1565c0; border-width:2px;"></span> Current</div>
+        </div>
+        <div class="panel-body">
+            <div id="palette-grid" class="palette-grid"></div>
+        </div>
+        <div style="padding:15px; border-top:1px solid #ddd; background:#f5f5f5;">
+            <button onclick="confirmSubmit()" class="btn btn-danger" style="margin:0;">🚀 SUBMIT EXAM</button>
+        </div>
+    </div>
+
+    <div id="view-dashboard">
+        <div class="header">
+            <h2 style="margin:0;">📚 মক টেস্ট পোর্টাল</h2>
+            <p style="margin:5px 0 0;">Mr. Stylo Academy</p>
+        </div>
+        <div class="p-20">
+            <div id="exam-list"><p style="text-align:center; padding:20px; color:#666;">লোড হচ্ছে...</p></div>
+            <button onclick="switchView('admin-login')" class="btn btn-dark" style="margin-top:30px; font-size:0.9rem;">👨‍🏫 Teacher Panel</button>
+        </div>
+        <div style="text-align:center; padding:20px; color:#999; font-size:0.8rem;">© 2026 Mr. Stylo Academy</div>
+    </div>
+
+    <div id="view-intro" class="hidden p-20">
+        <div style="text-align:center; margin-bottom:20px;">
+            <h2 id="intro-title" style="color:#1565c0;">Exam Name</h2>
+        </div>
+        <div style="background:white; border:1px solid #ddd; border-radius:10px; padding:15px; margin-bottom:20px;">
+            <table style="width:100%; font-size:0.9rem;">
+                <tr><td>⏱️ সময়:</td><td><b id="intro-time">0</b> মিনিট</td></tr>
+                <tr><td>📝 প্রশ্ন:</td><td><b id="intro-q">0</b> টি</td></tr>
+                <tr><td>🎯 পূর্ণমান:</td><td><b id="intro-total-marks">0</b></td></tr>
+                <tr><td>✅ সঠিক: +<b id="intro-pos">1</b></td><td>❌ ভুল: -<b id="intro-neg">0.25</b></td></tr>
+            </table>
+        </div>
+        <label><b>আপনার নাম:</b></label>
+        <input type="text" id="student-name-input" placeholder="নাম লিখুন..." style="border: 2px solid #1565c0;">
+        <button onclick="startRealExam()" class="btn btn-primary">🚀 পরীক্ষা শুরু করুন</button>
+        <button onclick="switchView('dashboard')" class="btn btn-danger">ফিরে যান</button>
+    </div>
+
+    <div id="view-exam" class="hidden" style="display:none; flex-direction:column; height:100%;">
+        <div class="exam-header">
+            <button onclick="togglePanel(true)" class="menu-btn">☰</button>
+            <span id="display-name" style="font-weight:bold; color:#555;">Student</span>
+            <span id="timer" class="timer-badge">00:00</span>
+        </div>
+        <div class="p-20" style="flex:1; overflow-y:auto; background:#fbfbfb;">
+            <div class="marks-info">
+                <span class="mark-pos">+<span id="q-pos">1.0</span></span>
+                <span class="mark-neg">-<span id="q-neg">0.25</span></span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                 <span id="q-topic-badge" style="background:#e3f2fd; color:#1565c0; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold;">General</span>
+            </div>
+            <div id="q-container">
+                <img id="q-image" src="" onerror="this.style.display='none'" style="max-width:100%; max-height:200px; display:none; border-radius:8px; margin-bottom:10px; border:1px solid #ddd;">
+                <h3 id="q-text" style="margin-top:0; color:#333;">Q...</h3>
+                <div id="options-container" style="margin-top:20px;"></div>
+            </div>
+        </div>
+        <div class="footer-bar">
+            <button onclick="markAndNext()" class="btn-footer btn-white" style="color:#7b1fa2; border-color:#7b1fa2;">Mark Review</button>
+            <button onclick="clearResponse()" class="btn-footer btn-white">Clear</button>
+            <button onclick="saveAndNext()" class="btn-footer btn-blue">Save & Next</button>
+        </div>
+    </div>
+
+    <div id="view-result" class="hidden p-20" style="text-align:center;">
+        <h2 style="color:#1565c0;">ফলাফল</h2>
+        <div style="background:white; padding:20px; border-radius:12px; border:1px solid #eee; margin-bottom:20px; box-shadow:0 5px 15px rgba(0,0,0,0.05);">
+            <h3 id="res-name">Name</h3>
+            <span id="res-grade" style="font-size:3.5rem; font-weight:bold; display:block; margin:10px 0;">A</span>
+            <h1 id="res-score" style="font-size:3rem; color:#c62828; margin:0;">0</h1>
+            <p>প্রাপ্ত নম্বর</p>
+            
+            <div class="stat-grid">
+                <div class="stat-item">⏱️ সময়: <b id="res-time">0m 0s</b></div>
+                <div class="stat-item">📊 শতাংশ: <b id="res-percent">0%</b></div>
+                <div class="stat-item" style="color:green;">✅ সঠিক: <b id="res-correct">0</b></div>
+                <div class="stat-item" style="color:red;">❌ ভুল: <b id="res-wrong">0</b></div>
+                <div class="stat-item" style="color:#666;">⚪ স্কিপ: <b id="res-skip">0</b></div>
+                <div class="stat-item">📝 মোট: <b id="res-total">0</b></div>
+            </div>
+             <div style="margin-top:20px; text-align:left;">
+                <h4 style="margin-bottom:10px; color:#555; border-bottom:1px solid #eee; padding-bottom:5px;">📊 বিষয়ভিত্তিক পারফরম্যান্স</h4>
+                <div id="topic-analysis-container"></div>
+            </div>
+        </div>
+        <button onclick="shareExam()" class="btn btn-share" style="margin-bottom:10px;">📲 Share Result</button>
+        <button onclick="switchView('review-login')" class="btn" style="background:#f9a825; color:white;">👁️ উত্তরপত্র দেখুন (Review)</button>
+        <button onclick="loadLeaderboard()" class="btn btn-outline">🏆 লিডারবোর্ড</button>
+        <button onclick="location.reload()" class="btn btn-primary">Home</button>
+    </div>
+
+    <div id="view-admin-login" class="hidden p-20">
+        <h2 style="text-align:center;">🔐 শিক্ষক লগইন</h2>
+        <input type="password" id="admin-pass" placeholder="Pass">
+        <button onclick="checkAdmin()" class="btn btn-primary">Login</button>
+        <button onclick="switchView('dashboard')" class="btn btn-danger">Back</button>
+    </div>
+    <div id="view-admin-menu" class="hidden p-20">
+        <h2 style="text-align:center;">👨‍🏫 ড্যাশবোর্ড</h2>
+        <button onclick="switchView('create-exam')" class="btn btn-primary">📝 নতুন পরীক্ষা</button>
+        <button onclick="loadAdminResults()" class="btn btn-warning">📊 রেজাল্ট</button>
+        <button onclick="switchView('settings')" class="btn btn-dark">⚙️ পাসওয়ার্ড</button>
+        <button onclick="loadManageExams()" class="btn btn-danger">🗑️ ডিলিট</button>
+        <button onclick="switchView('dashboard')" class="btn btn-outline" style="margin-top:20px;">Logout</button>
+    </div>
+    <div id="view-settings" class="hidden p-20">
+        <h3>⚙️ পাসওয়ার্ড পরিবর্তন</h3>
+        <input type="text" id="new-teacher-pass" placeholder="Teacher Pass">
+        <input type="text" id="new-review-pass" placeholder="Review Pass">
+        <button onclick="saveSettings()" class="btn btn-success">Save</button>
+        <button onclick="switchView('admin-menu')" class="btn btn-danger">Back</button>
+    </div>
+    <div id="view-create-exam" class="hidden p-20" style="height:90vh; overflow-y:auto;">
+        <h3>📝 প্রশ্ন তৈরি</h3>
+        <input type="text" id="new-title" placeholder="নাম">
+        <div style="display:flex; gap:5px;"><input type="number" id="new-time" placeholder="সময়"><input type="number" id="mark-correct" value="1"><input type="number" id="mark-wrong" value="0.25"></div>
+        <div style="display:flex; gap:5px; margin-bottom:10px;"><button onclick="toggleInputMode('json')" class="btn btn-outline">JSON</button><button onclick="toggleInputMode('manual')" class="btn btn-outline">Manual</button></div>
+        <div id="mode-json"><textarea id="json-input" placeholder="Paste JSON..."></textarea></div>
+        <div id="mode-manual" class="hidden"><div id="questions-wrapper"></div><button onclick="addQuestionField()" class="btn">➕ Add Q</button></div>
+        <button id="btn-publish" class="btn btn-success">🚀 PUBLISH</button><button onclick="switchView('admin-menu')" class="btn btn-danger">Cancel</button>
+    </div>
+    <div id="view-manage-exams" class="hidden p-20"><h3 style="color:red; text-align:center;">🗑️ ডিলিট</h3><div id="manage-exam-list"></div><button onclick="switchView('admin-menu')" class="btn btn-primary">Back</button></div>
+    <div id="view-admin-results" class="hidden p-20"><div style="overflow-x:auto;"><table class="result-table"><tbody id="result-table-body"></tbody></table></div><button onclick="switchView('admin-menu')" class="btn btn-danger">Back</button></div>
+    <div id="view-leaderboard" class="hidden p-20"><h3 style="text-align:center;">🏆 মেধা তালিকা</h3><h4 id="lb-exam-name" style="text-align:center; color:#666;"></h4><div id="lb-list"></div><button onclick="switchView('result')" class="btn btn-primary">Back</button></div>
+    <div id="view-review-login" class="hidden p-20" style="text-align:center;"><h2>🔒 পাসওয়ার্ড</h2><input type="password" id="review-pass"><button onclick="checkReviewPass()" class="btn btn-success">Submit</button><button onclick="switchView('result')" class="btn btn-danger">Back</button></div>
+    <div id="view-review" class="hidden p-20" style="height:90vh; overflow-y:auto;">
+        <div style="position:sticky; top:0; background:#f0f2f5; z-index:100; padding-bottom:10px;">
+            <div style="text-align:center; border-bottom:1px solid #ddd; padding-bottom:10px; background:white; padding:10px; border-radius:0 0 10px 10px;">
+                <h3 style="margin:0;">উত্তরপত্র</h3>
+                <p id="review-student-name" style="color:#1565c0; font-weight:bold;"></p>
+            </div>
+            <div style="display:flex; gap:5px; margin-top:10px; overflow-x:auto; padding:2px;">
+                <button onclick="filterReview('all')" class="filter-btn active">সব (All)</button>
+                <button onclick="filterReview('wrong')" class="filter-btn" style="color:red; border-color:red;">ভুল (Wrong)</button>
+                <button onclick="filterReview('correct')" class="filter-btn" style="color:green; border-color:green;">সঠিক (Correct)</button>
+                <button onclick="filterReview('skipped')" class="filter-btn" style="color:#666; border-color:#666;">স্কিপ (Skipped)</button>
+            </div>
+        </div>
+        <div id="review-list" style="margin-top:10px;"></div><button onclick="switchView('result')" class="btn btn-primary" style="margin-top:20px;">Back</button>
+    </div>
+
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, orderBy, query, Timestamp, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyC5hrI06t9N-K4GAlLxGc6pjb0-JyNC9c8", authDomain: "myquizapp-7c5ac.firebaseapp.com", projectId: "myquizapp-7c5ac", storageBucket: "myquizapp-7c5ac.firebasestorage.app", messagingSenderId: "685862319630", appId: "1:685862319630:web:2997eda6844b3bf9d6ee5f" };
+    let app, db; try { app=initializeApp(firebaseConfig); db=getFirestore(app); } catch(e){}
+
+    let activeExam=null, currentIdx=0, userAnswers=[], reviews=[], timerInterval, studentName="", inputMode='json';
+    let appSettings = { teacherPass: "1234", reviewPass: "5678" };
+    let examsData = []; 
+    let cheatCount = 0;
+    let remainingSeconds = 0;
+
+    async function initApp() {
+        try {
+            const docRef = doc(db, "settings", "config");
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) appSettings = docSnap.data();
+            else await setDoc(docRef, appSettings);
+        } catch(e){}
+        loadExams();
+    }
+    initApp();
+
+    window.showPopup=(t,m,i,ok)=>{
+        document.getElementById('pop-title').innerText=t; document.getElementById('pop-msg').innerText=m; document.getElementById('pop-icon').innerText=i;
+        document.getElementById('custom-popup').classList.remove('hidden');
+        document.getElementById('btn-pop-ok').onclick=()=>{ document.getElementById('custom-popup').classList.add('hidden'); if(ok)ok(); };
+        document.getElementById('btn-pop-cancel').onclick=()=>{ document.getElementById('custom-popup').classList.add('hidden'); };
+    };
+
+    window.switchView=(v)=>{ 
+        document.querySelectorAll('.container>div').forEach(d=>{ if(!d.id.includes('popup') && !d.id.includes('side')) d.classList.add('hidden'); if(d.id==='view-exam') d.style.display='none'; }); 
+        let t=document.getElementById('view-'+v); if(v==='exam'){t.style.display='flex'; t.classList.remove('hidden');} else t.classList.remove('hidden');
+    };
+
+    window.togglePanel=(open)=>{
+        const p=document.getElementById('side-panel'), o=document.getElementById('side-overlay');
+        if(open){ p.classList.add('open'); o.classList.add('active'); updatePalette(); }
+        else{ p.classList.remove('open'); o.classList.remove('active'); }
+    };
+
+    window.checkAdmin=()=>{ if(document.getElementById('admin-pass').value===appSettings.teacherPass){ document.getElementById('new-teacher-pass').value=appSettings.teacherPass; document.getElementById('new-review-pass').value=appSettings.reviewPass; window.switchView('admin-menu'); } else showPopup("Error","ভুল পাসওয়ার্ড!","❌"); };
+    window.checkReviewPass=()=>{ if(document.getElementById('review-pass').value===appSettings.reviewPass) window.showReview(); else showPopup("Error","ভুল পাসওয়ার্ড!","❌"); };
+    window.saveSettings=async()=>{ const t=document.getElementById('new-teacher-pass').value, r=document.getElementById('new-review-pass').value; if(t&&r){ appSettings={teacherPass:t, reviewPass:r}; await setDoc(doc(db,"settings","config"),appSettings); showPopup("Success","Saved!","✅",()=>window.switchView('admin-menu')); } };
+
+    window.showIntro=(idx)=>{ 
+        activeExam = examsData[idx];
+        window.switchView('intro'); 
+        let pos = activeExam.marking ? activeExam.marking.correct : 1;
+        let neg = activeExam.marking ? activeExam.marking.wrong : 0.25;
+        document.getElementById('intro-title').innerText=activeExam.title; document.getElementById('intro-time').innerText=activeExam.duration; 
+        document.getElementById('intro-q').innerText=activeExam.questions.length; document.getElementById('intro-total-marks').innerText=activeExam.questions.length*pos;
+        document.getElementById('intro-pos').innerText=pos; document.getElementById('intro-neg').innerText=neg;
+        document.getElementById('student-name-input').value="";
+    };
+
+    window.startRealExam=()=>{ 
+        studentName=document.getElementById('student-name-input').value; 
+        if(!studentName) return showPopup("Alert","নাম লিখুন!","✍️"); 
+        userAnswers=new Array(activeExam.questions.length).fill(null); 
+        reviews=new Array(activeExam.questions.length).fill(false);
+        currentIdx=0; cheatCount=0;
+        document.getElementById('display-name').innerText=studentName; 
+        document.getElementById('q-pos').innerText = activeExam.marking ? activeExam.marking.correct : 1;
+        document.getElementById('q-neg').innerText = activeExam.marking ? activeExam.marking.wrong : 0.25;
+        window.switchView('exam'); 
+        generatePalette(); loadQuestion(); startTimer(activeExam.duration*60); 
+        document.addEventListener("visibilitychange", handleCheat); 
+    };
+
+    function generatePalette(){
+        let html=""; for(let i=0; i<activeExam.questions.length; i++) html+=`<div onclick="jumpToQ(${i})" id="pal-${i}" class="palette-btn">${i+1}</div>`;
+        document.getElementById('palette-grid').innerHTML=html;
+    }
+    window.jumpToQ=(idx)=>{ currentIdx=idx; loadQuestion(); togglePanel(false); };
+
+    function loadQuestion(){ 
+        const q=activeExam.questions[currentIdx]; 
+        document.getElementById('q-text').innerText=`Q${currentIdx+1}. ${q.q}`; 
+        document.getElementById('q-topic-badge').innerText = q.topic || "General";
+        const imgEl = document.getElementById('q-image');
+        if(q.image){ imgEl.src=q.image; imgEl.style.display='block'; } else { imgEl.style.display='none'; }
+        let h=""; 
+        q.options.forEach(o=>{h+=`<div onclick="selOpt('${o}')" class="option-btn ${userAnswers[currentIdx]===o?'selected':''}">${o}</div>`;}); 
+        document.getElementById('options-container').innerHTML=h; 
+    }
+    function updatePalette(){
+        document.querySelectorAll('.palette-btn').forEach((btn, i)=>{
+            btn.className='palette-btn'; 
+            if(i===currentIdx) btn.classList.add('active');
+            if(userAnswers[i]) btn.classList.add('answered');
+            if(reviews[i]) btn.classList.add('review');
+        });
+    }
+
+    window.selOpt=(o)=>{ userAnswers[currentIdx]=o; loadQuestion(); };
+    window.markAndNext=()=>{ reviews[currentIdx]=true; window.nextQ(); };
+    window.clearResponse=()=>{ userAnswers[currentIdx]=null; reviews[currentIdx]=false; loadQuestion(); };
+    window.saveAndNext=()=>{ if(userAnswers[currentIdx]) reviews[currentIdx]=false; window.nextQ(); };
+    window.nextQ=()=>{ if(currentIdx<activeExam.questions.length-1){ currentIdx++; loadQuestion(); } else { showPopup("End","শেষ প্রশ্ন! সাবমিট করুন।","🏁", ()=>togglePanel(true)); } };
+    window.confirmSubmit=()=>{ showPopup("Submit?","আপনি কি নিশ্চিত?","🚀", window.submitExam); };
+
+    function handleCheat(){
+        if(document.hidden){
+            cheatCount++;
+            if(cheatCount >= 3) {
+                showPopup("Violation", "৩ বার ওয়ার্নিং শেষ! অটোমেটিক সাবমিট হচ্ছে।", "🚫", window.submitExam);
+            } else {
+                showPopup("Warning", `ট্যাব পরিবর্তন করবেন না! ওয়ার্নিং: ${cheatCount}/3`, "⚠️");
+            }
+        }
+    }
+
+    window.submitExam=async()=>{ 
+        clearInterval(timerInterval); document.removeEventListener("visibilitychange", handleCheat); 
+        
+        let score=0, correct=0, wrong=0, skip=0;
+        let pos=activeExam.marking?activeExam.marking.correct:1, neg=activeExam.marking?activeExam.marking.wrong:0.25;
+        let topicStats = {}; 
+
+        activeExam.questions.forEach((q,i)=>{ 
+            let t = q.topic || "Others";
+            if(!topicStats[t]) topicStats[t] = {total:0, correct:0};
+            topicStats[t].total++;
+            if(userAnswers[i]===q.answer) { score+=pos; correct++; topicStats[t].correct++; }
+            else if(userAnswers[i]) { score-=neg; wrong++; }
+            else { skip++; }
+        });
+
+        let totalSec = activeExam.duration*60;
+        let takenSec = totalSec - remainingSeconds;
+        let mm = Math.floor(takenSec/60);
+        let ss = takenSec%60;
+        let percent=(score/(activeExam.questions.length*pos))*100;
+        
+        let topicHtml = "";
+        for(let t in topicStats) {
+            let p = (topicStats[t].correct / topicStats[t].total) * 100;
+            let color = p >= 80 ? '#2e7d32' : (p >= 40 ? '#f9a825' : '#c62828');
+            topicHtml += `<div class="topic-row"><div class="topic-header"><span>${t}</span><span>${Math.round(p)}% (${topicStats[t].correct}/${topicStats[t].total})</span></div><div class="progress-bg"><div class="progress-fill" style="width:${p}%; background:${color};"></div></div></div>`;
+        }
+
+        window.switchView('result'); 
+        document.getElementById('res-score').innerText=score.toFixed(2); 
+        document.getElementById('res-percent').innerText=percent.toFixed(1)+"%"; 
+        document.getElementById('res-grade').innerText = percent>=80?"A+":percent>=60?"A":percent>=40?"B":"F";
+        document.getElementById('res-time').innerText = `${mm}m ${ss}s`;
+        document.getElementById('res-correct').innerText = correct;
+        document.getElementById('res-wrong').innerText = wrong;
+        document.getElementById('res-skip').innerText = skip;
+        document.getElementById('res-total').innerText = activeExam.questions.length;
+        document.getElementById('topic-analysis-container').innerHTML = topicHtml;
+
+        // 🔥 NEW SHORTCODE FOR CONFETTI (এক লাইনে কাজ শেষ!) 🔥
+        try { confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } }); } catch(e){}
+        
+        try{ await addDoc(collection(db,"results"),{name:studentName, exam:activeExam.title, score:score.toFixed(2), percent:percent.toFixed(1), createdAt:Timestamp.now()}); }catch(e){}
+    };
+
+    function startTimer(s){ 
+        remainingSeconds = s;
+        clearInterval(timerInterval); 
+        timerInterval=setInterval(()=>{ 
+            let m=Math.floor(remainingSeconds/60), sc=remainingSeconds%60; 
+            document.getElementById('timer').innerText=`${m}:${sc<10?'0':''}${sc}`; 
+            if(remainingSeconds--<=0){clearInterval(timerInterval); showPopup("Time Up","সময় শেষ!","⌛",window.submitExam);} 
+        },1000); 
+    }
+
+    async function loadExams(){ 
+        const l=document.getElementById('exam-list'); l.innerHTML="Loading..."; examsData=[]; 
+        try{ 
+            const s=await getDocs(query(collection(db,"exams"),orderBy("createdAt","desc"))); 
+            l.innerHTML=s.empty?"No Exams":""; 
+            let i=0;
+            s.forEach(d=>{ 
+                examsData.push(d.data()); 
+                l.innerHTML+=`<div class="exam-card"><div><h3>${d.data().title}</h3><p>${d.data().duration}m | ${d.data().questions.length}Q</p></div><button onclick="showIntro(${i})" class="btn btn-primary" style="width:auto; padding:5px 15px;">Start</button></div>`; 
+                i++;
+            }); 
+        }catch(e){l.innerHTML="DB Error";} 
+    }
+
+    window.filterReview = (type) => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+        document.querySelectorAll('.review-item').forEach(item => {
+            if(type === 'all') item.style.display = 'block';
+            else if(item.classList.contains(type)) item.style.display = 'block';
+            else item.style.display = 'none';
+        });
+    };
+
+    window.showReview=()=>{ 
+        let h=""; 
+        document.getElementById('review-student-name').innerText = studentName; 
+        activeExam.questions.forEach((q,i)=>{ 
+            let statusClass = "";
+            let statusColor = "";
+            if(userAnswers[i] === q.answer) { statusClass="correct"; statusColor="green"; }
+            else if(userAnswers[i]) { statusClass="wrong"; statusColor="red"; }
+            else { statusClass="skipped"; statusColor="#666"; }
+
+            h += `
+            <div class="q-box review-item ${statusClass}" style="border-left: 5px solid ${statusColor}; background: white; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <p style="margin: 0 0 10px 0; font-size: 1rem;"><b>Q${i+1}. ${q.q}</b></p>
+                ${q.image ? `<img src="${q.image}" style="max-width:100%; height:auto; border-radius:5px; margin-bottom:10px;">` : ''}
+                <div style="font-size: 0.9rem; color: #555;">
+                    <p style="margin: 5px 0;">আপনার উত্তর: <b style="color:${statusColor}">${userAnswers[i] || 'Skipped'}</b></p>
+                    <p style="margin: 5px 0;">সঠিক উত্তর: <b style="color:green">${q.answer}</b></p>
+                </div>
+                <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin-top: 10px; font-size: 0.85rem; color: #0d47a1;">
+                    <b>💡 ব্যাখ্যা:</b> ${q.explanation || 'কোনো ব্যাখ্যা নেই।'}
+                </div>
+            </div>`;
+        }); 
+        document.getElementById('review-list').innerHTML=h; 
+        window.switchView('review'); 
+    };
+
+    window.toggleInputMode=(m)=>{ inputMode=m; document.getElementById('mode-json').classList.toggle('hidden', m!=='json'); document.getElementById('mode-manual').classList.toggle('hidden', m!=='manual'); if(m==='manual' && document.getElementById('questions-wrapper').children.length===0) window.addQuestionField(); };
+    window.addQuestionField = () => {
+        const wrapper = document.getElementById('questions-wrapper');
+        const qId = Date.now(); 
+        const qNum = wrapper.children.length + 1;
+        const html = `
+        <div class="q-card" id="q-${qId}">
+            <div class="q-header"><span class="q-title" onclick="toggleQ('q-${qId}')">📝 প্রশ্ন ${qNum} (ক্লিক করে লুকান)</span><div class="q-actions"><button type="button" class="btn-icon btn-min" onclick="toggleQ('q-${qId}')">_</button><button type="button" class="btn-icon btn-del" onclick="removeQ('q-${qId}')">×</button></div></div>
+            <div class="q-body">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;"><input type="text" class="inp-topic" placeholder="বিষয় (Math)" style="padding:8px; border:1px solid #ddd; border-radius:5px;"><input type="text" class="inp-img" placeholder="ছবির লিংক" oninput="previewImg(this, 'img-${qId}')" style="padding:8px; border:1px solid #ddd; border-radius:5px;"></div><img id="img-${qId}" class="img-preview" src="">
+                <textarea class="inp-q" placeholder="প্রশ্ন..." style="width:100%; height:60px; padding:10px; border:1px solid #1565c0; border-radius:5px; margin-bottom:10px;"></textarea>
+                <label style="font-size:0.85rem; color:#666;">অপশনসমূহ (সঠিক উত্তরে টিক দিন):</label>
+                <div class="options-container" id="opts-${qId}">${getOptionHtml(qId, 1)}${getOptionHtml(qId, 2)}${getOptionHtml(qId, 3)}${getOptionHtml(qId, 4)}</div>
+                <button type="button" onclick="addOption('${qId}')" style="background:#e3f2fd; color:#1565c0; border:1px dashed #1565c0; width:100%; padding:8px; border-radius:5px; cursor:pointer; font-weight:bold; margin-top:5px;">➕ আরও অপশন</button>
+                <div style="margin-top:15px;"><label style="font-size:0.85rem; color:#666;">💡 ব্যাখ্যা:</label><textarea class="inp-exp" placeholder="ব্যাখ্যা..." style="width:100%; height:50px; padding:8px; border:1px solid #ddd; border-radius:5px; background:#fff3cd;"></textarea></div>
+            </div>
+        </div>`;
+        wrapper.insertAdjacentHTML('beforeend', html);
+    };
+    function getOptionHtml(qId, num) { return `<div class="opt-row"><input type="radio" name="ans-${qId}" class="opt-radio" value="${num-1}"><input type="text" class="inp-opt" placeholder="অপশন ${num}"><button type="button" class="btn-remove-opt" onclick="this.parentElement.remove()">×</button></div>`; }
+    window.addOption = (qId) => { const c = document.getElementById(`opts-${qId}`); c.insertAdjacentHTML('beforeend', getOptionHtml(qId, c.children.length + 1)); };
+    window.toggleQ = (id) => { document.getElementById(id).classList.toggle('minimized'); };
+    window.removeQ = (id) => { if(confirm("Delete?")) document.getElementById(id).remove(); };
+    window.previewImg = (i, id) => { const img = document.getElementById(id); if(i.value) { img.src = i.value; img.style.display = 'block'; } else { img.style.display = 'none'; } };
+
+    document.getElementById('btn-publish').addEventListener('click', async () => {
+        const title = document.getElementById('new-title').value;
+        const dur = document.getElementById('new-time').value;
+        const pos = parseFloat(document.getElementById('mark-correct').value) || 1;
+        const neg = parseFloat(document.getElementById('mark-wrong').value) || 0.25;
+        let q = [];
+        if (inputMode === 'json') { try { let j = JSON.parse(document.getElementById('json-input').value); q = Array.isArray(j) ? j : (j.questions || []); } catch (e) { return showPopup("Error", "JSON Error", "⚠️"); } } else { 
+            const cards = document.querySelectorAll('.q-card');
+            if (cards.length === 0) return showPopup("Error", "No Questions!", "⚠️");
+            for (let card of cards) {
+                let qt = card.querySelector('.inp-q').value.trim();
+                let topic = card.querySelector('.inp-topic').value.trim();
+                let img = card.querySelector('.inp-img').value.trim();
+                let exp = card.querySelector('.inp-exp').value.trim();
+                let optInputs = card.querySelectorAll('.inp-opt');
+                let options = []; let correctAns = null;
+                
+                optInputs.forEach((inp) => { 
+                    if (inp.value.trim()) { 
+                        options.push(inp.value.trim()); 
+                        if (inp.parentElement.querySelector('.opt-radio').checked) correctAns = inp.value.trim();
+                    } 
+                });
+
+                if (qt && options.length >= 2 && correctAns) {
+                    q.push({ q: qt, options: options, answer: correctAns, topic: topic || "General", image: img || null, explanation: exp || null });
+                } else {
+                    return showPopup("Error", "Check Questions (Min 2 options + Correct Answer)", "❌");
+                }
+            }
+        }
+        if (!title || q.length === 0) return showPopup("Error", "Title required!", "⚠️");
+        document.getElementById('btn-publish').innerText = "Saving...";
+        try { await addDoc(collection(db, "exams"), { title: title, duration: dur, questions: q, marking: { correct: pos, wrong: neg }, createdAt: Timestamp.now() }); showPopup("Success", "Published!", "✅", () => window.switchView('admin-menu')); } catch (e) { showPopup("Error", "DB Error", "❌"); }
+        document.getElementById('btn-publish').innerText = "🚀 PUBLISH";
+    });
+
+    window.shareExam=()=>{ const t=`🔥 ${activeExam.title}\n🏆 Score: ${document.getElementById('res-score').innerText}\n👉 Link: ${window.location.href}`; if(navigator.share) navigator.share({title:activeExam.title, text:t, url:window.location.href}); else prompt("Copy Link:", window.location.href); };
+    window.loadAdminResults=async()=>{ window.switchView('admin-results'); const b=document.getElementById('result-table-body'); b.innerHTML="Loading..."; const s=await getDocs(query(collection(db,"results"),orderBy("createdAt","desc"))); b.innerHTML=s.empty?"Empty":""; s.forEach(d=>{let v=d.data(); b.innerHTML+=`<tr><td>${v.name}</td><td>${v.exam}</td><td><b>${v.score}</b></td></tr>`;}); };
+    window.loadManageExams=async()=>{ window.switchView('manage-exams'); const l=document.getElementById('manage-exam-list'); l.innerHTML="Loading..."; const s=await getDocs(query(collection(db,"exams"),orderBy("createdAt","desc"))); l.innerHTML=s.empty?"Empty":""; s.forEach(d=>{l.innerHTML+=`<div class="exam-card"><h3>${d.data().title}</h3><button onclick="delExam('${d.id}')" class="btn-danger" style="width:auto; padding:5px;">🗑️</button></div>`;}); };
+    window.delExam=async(id)=>{ showPopup("Delete?","Confirm?","🗑️",async()=>{ await deleteDoc(doc(db,"exams",id)); loadManageExams(); }); };
+    window.loadLeaderboard=async()=>{ window.switchView('leaderboard'); document.getElementById('lb-exam-name').innerText=activeExam.title; const l=document.getElementById('lb-list'); l.innerHTML="Loading..."; const s=await getDocs(query(collection(db,"results"),orderBy("score","desc"))); let h=`<table class="result-table"><tr><th>Rank</th><th>Name</th><th>Score</th></tr>`, r=1; s.forEach(d=>{ let v=d.data(); if(v.exam===activeExam.title){ h+=`<tr><td>${r===1?'🥇':r===2?'🥈':r===3?'🥉':r}</td><td>${v.name}</td><td>${v.score}</td></tr>`; r++; } }); l.innerHTML=r>1?h+"</table>":"No results."; };
+
+</script>
+</body>
+</html>
