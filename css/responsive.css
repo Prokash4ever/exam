@@ -1,0 +1,126 @@
+/* ==================== RESPONSIVE STYLES ==================== */
+
+/* Mobile: < 480px */
+@media (max-width: 480px) {
+    .container {
+        max-width: 100%;
+        border-radius: 0;
+    }
+    
+    .header {
+        padding: 15px 10px;
+        border-radius: 0;
+    }
+    
+    .header h2 {
+        font-size: 1.2rem;
+    }
+    
+    .card {
+        margin: 10px;
+        padding: 15px;
+    }
+    
+    .btn {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .exam-header {
+        padding: 8px 10px;
+    }
+    
+    .question-card {
+        padding: 15px;
+        margin: 10px;
+    }
+    
+    .question-text {
+        font-size: 1rem;
+    }
+}
+
+/* Tablet: 481px - 768px */
+@media (min-width: 481px) and (max-width: 768px) {
+    .container {
+        max-width: 90%;
+        margin: 20px auto;
+        border-radius: 15px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Desktop: 769px - 1200px */
+@media (min-width: 769px) {
+    .container {
+        margin: 20px auto;
+        border-radius: 20px;
+        min-height: 90vh;
+        max-height: 90vh;
+        overflow: hidden;
+    }
+}
+
+/* Large: > 1200px */
+@media (min-width: 1201px) {
+    .container {
+        max-width: 600px;
+    }
+}
+
+/* Safe area for notches */
+@supports (padding: max(0px)) {
+    .container {
+        padding-left: max(10px, env(safe-area-inset-left));
+        padding-right: max(10px, env(safe-area-inset-right));
+        padding-top: max(10px, env(safe-area-inset-top));
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: #121212;
+        color: #ffffff;
+    }
+    
+    .container {
+        background: #1e1e1e;
+    }
+    
+    .card {
+        background: #2d2d2d;
+        border-color: #444;
+    }
+    
+    .input {
+        background: #2d2d2d;
+        border-color: #444;
+        color: white;
+    }
+    
+    .option {
+        background: #2d2d2d;
+        border-color: #444;
+    }
+}
+
+/* Print styles */
+@media print {
+    .btn, .timer, .exam-header {
+        display: none !important;
+    }
+    
+    .container {
+        box-shadow: none;
+        max-width: 100%;
+    }
+}

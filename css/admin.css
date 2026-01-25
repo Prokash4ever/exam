@@ -1,0 +1,253 @@
+/* ==================== ADMIN SPECIFIC ==================== */
+
+/* Admin Dashboard */
+.admin-dashboard {
+    padding: 20px;
+}
+
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #eee;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary);
+    font-family: 'Poppins', sans-serif;
+    margin: 10px 0;
+}
+
+.stat-label {
+    color: var(--gray);
+    font-size: 0.9rem;
+}
+
+/* Admin Grid Actions */
+.admin-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.action-card {
+    background: white;
+    border: 2px dashed #dfe6e9;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.action-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-3px);
+}
+
+.action-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.action-title {
+    font-weight: 600;
+    color: var(--dark);
+    font-size: 0.9rem;
+}
+
+/* Exam Form */
+.exam-form {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #dfe6e9;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+}
+
+.form-control:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+
+/* Question Editor */
+.question-editor {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #eee;
+}
+
+.option-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.option-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+/* Results Table */
+.results-table {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #eee;
+}
+
+.table-header {
+    background: #f8f9fa;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    font-weight: 600;
+}
+
+.table-body {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.table-row {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.table-row:last-child {
+    border-bottom: none;
+}
+
+/* Admin Sidebar */
+.admin-sidebar {
+    background: #2d3436;
+    color: white;
+    width: 250px;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    padding: 20px 0;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+}
+
+.menu-item {
+    padding: 15px 20px;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.menu-item:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.menu-item.active {
+    background: var(--primary);
+}
+
+/* Export Buttons */
+.export-buttons {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.export-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.export-pdf {
+    background: #d63031;
+    color: white;
+}
+
+.export-excel {
+    background: #00b894;
+    color: white;
+}
+
+.export-json {
+    background: #6c5ce7;
+    color: white;
+}
+
+/* Settings Panel */
+.settings-panel {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    border: 1px solid #eee;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.setting-item:last-child {
+    border-bottom: none;
+}
+
+.setting-label {
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.setting-value {
+    color: var(--gray);
+}
